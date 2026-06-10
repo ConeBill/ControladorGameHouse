@@ -1,0 +1,45 @@
+:root {
+  --bg-main: #050014;
+  --bg-panel: #0b0628;
+
+  --neon-blue: #00eaff;
+  --neon-pink: #ff2bdc;
+  --neon-purple: #7b5cff;
+  --text-main: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #12003a, var(--bg-main));
+  color: var(--text-main);
+}
+
+.machine-dashboard {
+  height: 220px;
+  border-top: 2px solid #ff00ff;
+}
+
+.machine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  padding: 12px;
+}
+
+.machine-card {
+  min-width: 220px;
+  max-width: 220px;
+}

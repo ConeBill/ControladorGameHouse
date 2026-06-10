@@ -1,0 +1,235 @@
+/* BOTÃO FIXO */
+
+.hamburger-fixed {
+  position: fixed;
+  top: 22px;
+  left: 22px;
+  z-index: 1300;
+
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+
+  /* REMOVE ESTILO NATIVO */
+  outline: none;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /* IMPORTANTE */
+  filter: none;
+}
+
+.hamburger-fixed span {
+  height: 3px;
+  width: 100%;
+  background: #ff00ff;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+
+  box-shadow: 0 0 6px #ff00ff;
+  animation: neonPulse 2s infinite alternate;
+}
+
+/* vira X */
+.hamburger-fixed.open span:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.hamburger-fixed.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-fixed.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+.hamburger-fixed:focus,
+.hamburger-fixed:focus-visible,
+.hamburger-fixed:active {
+  outline: none;
+  box-shadow: none;
+}
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -260px;
+  width: 260px;
+  height: 100vh;
+  background: linear-gradient(180deg, #0b0020, #12002f);
+  padding: 100px 16px 16px;
+  transition: left 0.35s ease;
+  z-index: 1250;
+  box-shadow: 0 0 25px #ff00ff88;
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+/* MENU */
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* BOTÕES NEON */
+.neon-button {
+  padding: 12px;
+  text-align: center;
+  border-radius: 8px;
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid #ff00ff;
+  box-shadow: 0 0 12px #ff00ff;
+  animation: neonPulse 3s infinite alternate;
+  transition: 0.2s;
+}
+
+.neon-button:hover {
+  background: rgba(255, 0, 255, 0.2);
+}
+
+/* OVERLAY */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 900;
+}
+
+.neon-button {
+  position: relative;
+  outline: none;
+}
+
+/* TOOLTIP */
+.neon-button::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 110%;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+
+  background: rgba(20, 0, 40, 0.95);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+
+  border: 1px solid #ff00ff;
+  box-shadow: 0 0 10px #ff00ff;
+  animation: neonPulse 2s infinite alternate;
+}
+
+/* MOSTRA TOOLTIP */
+.neon-button:hover::after {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+/* Logo */
+.sidebar-logo {
+  margin-top: auto;
+  padding: 12px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+}
+
+.sidebar-logo img {
+  width: 250px;
+  height: 100px;
+  object-fit: contain;
+
+  filter: drop-shadow(0 0 6px #ff00ff);
+  animation: logoPulse 3s infinite alternate;
+}
+
+.protected-password-modal {
+  width: min(100%, 420px);
+  background: rgba(8, 2, 24, 0.98);
+  border: 1px solid rgba(255, 0, 255, 0.28);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 0 40px rgba(255, 0, 255, 0.2);
+  color: #fff;
+}
+
+.protected-password-modal h3 {
+  margin: 0 0 10px;
+  font-size: 1.4rem;
+}
+
+.protected-password-modal p {
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+
+.protected-password-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 0, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 1rem;
+  margin-bottom: 22px;
+}
+
+.protected-password-input:focus {
+  outline: none;
+  border-color: rgba(255, 0, 255, 0.8);
+  box-shadow: 0 0 0 4px rgba(255, 0, 255, 0.12);
+}
+
+.protected-password-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.protected-password-modal .neon-button {
+  background: rgba(255, 0, 255, 0.16);
+  border-color: rgba(255, 0, 255, 0.55);
+  color: #fff;
+}
+
+.protected-password-modal .neon-button:hover {
+  background: rgba(255, 0, 255, 0.28);
+}
+
+.protected-password-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.78);
+  z-index: 1500;
+}
+
+@keyframes neonPulse {
+  from {
+    box-shadow: 0 0 6px #00ffff;
+  }
+  to {
+    box-shadow: 0 0 14px #ff00ff;
+  }
+}

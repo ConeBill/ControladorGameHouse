@@ -1,0 +1,53 @@
+.machine-card h3 {
+  margin: 0 0 10px;
+}
+
+.machine-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 180px);
+  grid-auto-rows: 110px;
+  gap: 12px;
+  justify-content: start;
+}
+
+.timer {
+  font-size: 28px;
+  color: var(--neon-pink);
+  text-shadow: 0 0 8px var(--neon-pink);
+}
+
+.status {
+  margin-top: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: gray;
+}
+
+.status.on {
+  background: #00ff66;
+  box-shadow: 0 0 10px #00ff66;
+}
+
+.machine-card.placeholder {
+  filter: blur(6px);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.fake-status {
+  margin-top: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--neon-blue);
+  box-shadow: 0 0 10px var(--neon-blue);
+}
+
+.machine-card {
+  width: 180px;
+  height: 110px;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 13px;
+}
