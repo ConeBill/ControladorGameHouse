@@ -16,6 +16,8 @@ export default function ClientRegister() {
   const [isEditing, setIsEditing] = useState(false)
   const [reservedId, setReservedId] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [clientSessions, setClientSessions] = useState([])
+  const [loadingSessions, setLoadingSessions] = useState(false)
 
   const [form, setForm] = useState({
     id: '',
@@ -27,12 +29,37 @@ export default function ClientRegister() {
   })
   const [clientFilter, setClientFilter] = useState('')
 
+  const selectedClientForPlay = form.id ? clients.find(client => client.id === form.id) : null
+
   /* =========================
      LOAD CLIENTS
   ========================= */
   useEffect(() => {
     dispatch(fetchClients())
   }, [dispatch])
+
+  useEffect(() => {
+    if (!selectedClientForPlay) {
+      setClientSessions([])
+      return
+    }
+
+    let cancelled = false
+    setLoadingSessions(true)
+
+    window.api.getPlaySessions()
+      .then(all => {
+        if (!cancelled) setClientSessions((all || []).filter(s => s.client_id === selectedClientForPlay.id))
+      })
+      .catch(() => {
+        if (!cancelled) setClientSessions([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSessions(false)
+      })
+
+    return () => { cancelled = true }
+  }, [selectedClientForPlay])
 
   const filteredClients = clients.filter(client => {
     const normalizedFilter = clientFilter.trim().toLowerCase()
@@ -81,8 +108,6 @@ export default function ClientRegister() {
       playTime: 0
     })
   }
-
-  const selectedClientForPlay = form.id ? clients.find(client => client.id === form.id) : null
 
   async function handleStartPlay() {
     if (!selectedClientForPlay) {
@@ -166,6 +191,13 @@ export default function ClientRegister() {
     const date = new Date(value)
     if (Number.isNaN(date.getTime())) return value
     return date.toLocaleDateString('pt-BR')
+  }
+
+  function formatMinutes(totalMinutes) {
+    const safe = Math.max(Number(totalMinutes || 0), 0)
+    const h = Math.floor(safe / 60)
+    const m = safe % 60
+    return `${h}h ${m.toString().padStart(2, '0')}min`
   }
 
   /* =========================
@@ -257,6 +289,55 @@ export default function ClientRegister() {
         </button>
         <button className="action-button action-button--ghost" disabled>Relatório</button>
       </div>
+
+      {selectedClientForPlay && (
+        <section className="client-history">
+          <div className="client-history__header">
+            <h3>Histórico de sessões</h3>
+            <button
+              type="button"
+              className="neon-button"
+              onClick={() => navigate('/reports', { state: { clientId: selectedClientForPlay.id } })}
+            >
+              Ver relatório filtrado
+            </button>
+          </div>
+
+          {loadingSessions ? (
+            <p className="empty">Carregando sessões...</p>
+          ) : clientSessions.length === 0 ? (
+            <p className="empty">Nenhuma sessão registrada para este cliente.</p>
+          ) : (
+            <>
+              <div className="client-history__summary">
+                <div>
+                  <span>Tempo total jogado</span>
+                  <strong>{formatMinutes(clientSessions.reduce((sum, s) => sum + Number(s.played_minutes || 0), 0))}</strong>
+                </div>
+                <div>
+                  <span>Valor total gasto</span>
+                  <strong>R$ {clientSessions.reduce((sum, s) => sum + Number(s.paid_amount || 0), 0).toFixed(2)}</strong>
+                </div>
+              </div>
+
+              <div className="client-history__list">
+                {clientSessions.slice(0, 7).map(session => (
+                  <div key={session.id} className="client-history__item">
+                    <div>
+                      <strong>{session.machine_description || `Máquina ${session.machine_id}`}</strong>
+                      <span>{new Date(session.started_at).toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div>
+                      <span>{formatMinutes(Number(session.played_minutes || 0))} jogados</span>
+                      <strong>R$ {Number(session.paid_amount || 0).toFixed(2)}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {/* LISTA */}
       <div className="client-preview">

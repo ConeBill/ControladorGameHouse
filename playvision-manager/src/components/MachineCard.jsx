@@ -3,12 +3,13 @@ import { useDispatch } from 'react-redux'
 import { addMachineTime, resetMachine, persistMachineTime, updatePlaySession } from '../app/slices/machineSlice'
 import { calculateSessionEstimate } from '../utils/sessionPricing'
 
-export default function MachineCard({ machine }) {
+export default function MachineCard({ machine, isAlert }) {
     const dispatch = useDispatch()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [extraMinutes, setExtraMinutes] = useState(30)
 
     const isActiveSession = machine.status === 'em_uso' && machine.seconds > 0
+    const isBlocked = Boolean(machine.sessionExpired)
     const playerName = machine.playerName || 'Jogador em uso'
 
     const formattedTime = useMemo(() => formatTime(machine.seconds), [machine.seconds])
@@ -117,22 +118,24 @@ export default function MachineCard({ machine }) {
     }
 
     return (
-        <article className={`control-machine-card ${isActiveSession ? 'control-machine-card--active' : ''}`}>
+        <article className={`control-machine-card ${isActiveSession ? 'control-machine-card--active' : ''} ${isAlert ? 'control-machine-card--alert' : ''} ${isBlocked ? 'control-machine-card--blocked' : ''}`}>
             <div className="control-machine-card__top">
                 <div>
                     <p className="control-machine-card__id">#{machine.id}</p>
                     <h3 className="control-machine-card__name">{machine.description}</h3>
                 </div>
 
-                <span className={`control-machine-card__status ${machine.status === 'em_uso' ? 'status-active' : 'status-idle'}`}>
-                    {machine.status === 'em_uso' ? 'Em uso' : 'Livre'}
+                <span className={`control-machine-card__status ${machine.status === 'em_uso' ? 'status-active' : machine.status === 'bloqueada' || isBlocked ? 'status-blocked' : 'status-idle'}`}>
+                    {machine.status === 'em_uso' ? 'Em uso' : machine.status === 'bloqueada' || isBlocked ? 'Bloqueada' : 'Livre'}
                 </span>
             </div>
 
-            <div className="control-machine-card__time-block">
-                <p className="control-machine-card__label">Tempo restante</p>
-                <p className="control-machine-card__timer">{formattedTime}</p>
-            </div>
+            {(isActiveSession || isBlocked) && (
+                <div className="control-machine-card__time-block">
+                    <p className="control-machine-card__label">{isBlocked ? 'Status' : 'Tempo restante'}</p>
+                    <p className="control-machine-card__timer">{isBlocked ? 'Aguardando silenciar' : formattedTime}</p>
+                </div>
+            )}
 
             <div className="control-machine-card__footer">
                 <div className="control-machine-card__price">

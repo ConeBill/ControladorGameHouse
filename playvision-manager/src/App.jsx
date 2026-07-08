@@ -1,18 +1,125 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { incrementClientPlayTime } from './app/slices/clientSlice'
-import { tick, persistMachineTime, incrementMachineSessionMinutes, updatePlaySession, finalizeSession, resetMachine } from './app/slices/machineSlice'
+import { tick, persistMachineTime, incrementMachineSessionMinutes, updatePlaySession, finalizeSession, resetMachine, silenceMachine } from './app/slices/machineSlice'
 import AppRoutes from './routes'
+
+const FIVE_MINUTES = 5 * 60
+
+const SOUND_BASE = '/sounds'
+
+function playBeep(file, volume = 0.3) {
+  try {
+    const enabled = window.localStorage.getItem('settings.alarmEnabled')
+    if (enabled !== null && enabled === 'false') return
+
+    const countdownEnabled = window.localStorage.getItem('settings.alarmCountdownEnabled')
+    if (countdownEnabled === 'false' && file !== 'alarm.wav') return
+
+    const alarmVolumeStorage = window.localStorage.getItem('settings.alarmVolume')
+    const finalVolume = alarmVolumeStorage !== null ? Number(alarmVolumeStorage) : volume
+
+    const audio = new Audio(`${SOUND_BASE}/${file}`)
+    audio.volume = Math.max(0.01, Math.min(1, finalVolume))
+    audio.play().catch(() => {})
+  } catch (error) {
+    // silencioso
+  }
+}
+
+function playBeepCountdown() {
+  playBeep('beep-5min.wav', 0.35)
+}
+
+function playBeepAlarm() {
+  playBeep('alarm.wav', 0.55)
+}
 
 export default function App() {
   const dispatch = useDispatch()
   const machines = useSelector(state => state.machines.list)
   const machinesRef = useRef(machines)
 
+  const alarmsRef = useRef({
+    warnedMachines: new Set(),
+    activeAlarms: new Set(),
+    intervals: new Map(),
+  })
+
+  const [, setAlarmTick] = useState(0)
+
   useEffect(() => {
     machinesRef.current = machines
   }, [machines])
 
+  useEffect(() => {
+    const { warnedMachines, activeAlarms, intervals } = alarmsRef.current
+
+    machines.forEach(machine => {
+      if (machine.status !== 'em_uso') {
+        if (activeAlarms.has(machine.id)) {
+          clearInterval(intervals.get(machine.id))
+          intervals.delete(machine.id)
+          activeAlarms.delete(machine.id)
+          warnedMachines.delete(machine.id)
+          window.dispatchEvent(new CustomEvent('machineAlarmSilenced'))
+        }
+        return
+      }
+
+      if (machine.seconds > 0 && machine.seconds <= FIVE_MINUTES) {
+        if (!warnedMachines.has(machine.id)) {
+          playBeepCountdown()
+          warnedMachines.add(machine.id)
+        }
+      }
+
+      if (machine.seconds === 0 && machine.running === false && machine.sessionClosed && !activeAlarms.has(machine.id)) {
+        activeAlarms.add(machine.id)
+        const interval = setInterval(() => playBeepAlarm(), 900)
+        intervals.set(machine.id, interval)
+        window.dispatchEvent(new CustomEvent('machineAlarmTriggered', { detail: { machineId: machine.id, machineDescription: machine.description } }))
+      }
+    })
+
+    setAlarmTick(value => value + 1)
+  }, [machines])
+
+  useEffect(() => {
+    return () => {
+      const { intervals } = alarmsRef.current
+      intervals.forEach((interval) => clearInterval(interval))
+      intervals.clear()
+    }
+  }, [])
+
+  window.silenceAllMachineAlarms = () => {
+    const { activeAlarms, intervals } = alarmsRef.current
+    activeAlarms.forEach((machineId) => {
+      clearInterval(intervals.get(machineId))
+      intervals.delete(machineId)
+      dispatch(silenceMachine(machineId))
+      dispatch(persistMachineTime({
+        ...machinesRef.current.find(m => m.id === machineId),
+        seconds: 0,
+        status: 'livre',
+        available: true,
+        clientId: null,
+        clientName: null,
+        sessionId: null,
+        sessionPlayedMinutes: 0,
+        sessionPaidMinutes: 0,
+        sessionPaidAmount: 0
+      }))
+    })
+    activeAlarms.clear()
+
+    window.dispatchEvent(new CustomEvent('machineAlarmSilenced'))
+  }
+
+  function handleSilenceClick() {
+    window.silenceAllMachineAlarms?.()
+  }
   useEffect(() => {
     const persistRunningMachines = () => {
       machinesRef.current.forEach(machine => {
@@ -44,7 +151,7 @@ export default function App() {
 
   useEffect(() => {
     machines.forEach(machine => {
-      if (machine.sessionId && machine.sessionClosed && !machine.sessionFinalized) {
+      if (machine.sessionId && machine.sessionClosed && !machine.sessionFinalized && !machine.sessionExpired) {
         const finalPlayedMinutes = Number(machine.sessionPlayedMinutes || 0)
 
         dispatch(updatePlaySession({
@@ -56,18 +163,16 @@ export default function App() {
           status: 'encerrada'
         }))
 
-        dispatch(resetMachine(machine.id))
         dispatch(persistMachineTime({
           ...machine,
           seconds: 0,
-          status: 'livre',
-          available: true,
+          status: 'bloqueada',
+          available: false,
           clientId: null,
           clientName: null,
-          sessionId: null,
-          sessionPlayedMinutes: 0,
-          sessionPaidMinutes: 0,
-          sessionPaidAmount: 0
+          sessionPlayedMinutes: finalPlayedMinutes,
+          sessionPaidMinutes: Number(machine.sessionPaidMinutes || 0),
+          sessionPaidAmount: Number(machine.sessionPaidAmount || 0)
         }))
 
         dispatch(finalizeSession({ id: machine.id }))

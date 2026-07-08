@@ -183,3 +183,36 @@
 .control-panel.collapsed .control-panel__content {
   display: none;
 }
+
+/* ALARM BANNER */
+.control-panel__alarm-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  margin: 12px;
+  background: linear-gradient(90deg, rgba(255, 70, 40, 0.22), rgba(255, 140, 0, 0.12));
+  border: 1px solid rgba(255, 70, 60, 0.65);
+  color: #fff;
+  border-radius: 10px;
+}
+
+.control-panel__alarm-banner strong {
+  color: #ff7e6a;
+}
+
+.control-panel__alarm-button {
+  min-height: 36px;
+  border-radius: 12px;
+  border: 0;
+  background: #ff4d4d;
+  color: #fff;
+  font-weight: 700;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.control-panel__alarm-button:hover {
+  filter: brightness(1.1);
+}

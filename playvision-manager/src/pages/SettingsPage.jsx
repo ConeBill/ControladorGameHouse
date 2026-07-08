@@ -150,26 +150,54 @@ export default function SettingsPage() {
   }
 
   // Sound settings
-  const [soundEnabled, setSoundEnabled] = useState(true)
-  const [soundVolume, setSoundVolume] = useState(0.12)
+  const [sessionSoundEnabled, setSessionSoundEnabled] = useState(true)
+  const [sessionSoundVolume, setSessionSoundVolume] = useState(0.12)
+  const [alarmEnabled, setAlarmEnabled] = useState(true)
+  const [alarmCountdownEnabled, setAlarmCountdownEnabled] = useState(true)
+  const [alarmVolume, setAlarmVolume] = useState(0.4)
 
   useEffect(() => {
     const enabled = window.localStorage.getItem('settings.sessionSoundEnabled')
     const volume = window.localStorage.getItem('settings.sessionSoundVolume')
-    setSoundEnabled(enabled === null ? true : enabled === 'true')
-    setSoundVolume(volume === null ? 0.12 : Number(volume))
+    setSessionSoundEnabled(enabled === null ? true : enabled === 'true')
+    setSessionSoundVolume(volume === null ? 0.12 : Number(volume))
+
+    const alarmEnabledStorage = window.localStorage.getItem('settings.alarmEnabled')
+    const alarmCountdownStorage = window.localStorage.getItem('settings.alarmCountdownEnabled')
+    const alarmVolumeStorage = window.localStorage.getItem('settings.alarmVolume')
+    setAlarmEnabled(alarmEnabledStorage === null ? true : alarmEnabledStorage === 'true')
+    setAlarmCountdownEnabled(alarmCountdownStorage === null ? true : alarmCountdownStorage === 'true')
+    setAlarmVolume(alarmVolumeStorage === null ? 0.4 : Number(alarmVolumeStorage))
   }, [])
 
-  function handleToggleSound(e) {
+  function handleToggleSessionSound(e) {
     const val = e.target.checked
-    setSoundEnabled(val)
+    setSessionSoundEnabled(val)
     window.localStorage.setItem('settings.sessionSoundEnabled', String(val))
   }
 
-  function handleVolumeChange(e) {
+  function handleSessionVolumeChange(e) {
     const v = Number(e.target.value)
-    setSoundVolume(v)
+    setSessionSoundVolume(v)
     window.localStorage.setItem('settings.sessionSoundVolume', String(v))
+  }
+
+  function handleToggleAlarm(e) {
+    const val = e.target.checked
+    setAlarmEnabled(val)
+    window.localStorage.setItem('settings.alarmEnabled', String(val))
+  }
+
+  function handleToggleAlarmCountdown(e) {
+    const val = e.target.checked
+    setAlarmCountdownEnabled(val)
+    window.localStorage.setItem('settings.alarmCountdownEnabled', String(val))
+  }
+
+  function handleAlarmVolumeChange(e) {
+    const v = Number(e.target.value)
+    setAlarmVolume(v)
+    window.localStorage.setItem('settings.alarmVolume', String(v))
   }
 
   return (
@@ -285,24 +313,39 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="settings-card">
+      <section className="settings-card settings-card--sound">
         <div className="settings-card__header">
           <div>
-            <h3>Som de início de sessão</h3>
-            <p>Ative/desative o som que toca quando uma sessão é iniciada e ajuste o volume.</p>
+            <h3>Sons e alertas</h3>
+            <p>Ajuste os sons do sistema e dos avisos do painel de controle.</p>
           </div>
         </div>
 
         <div className="settings-actions">
           <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <input type="checkbox" checked={soundEnabled} onChange={handleToggleSound} />
-            Habilitar som de sessão
+            <input type="checkbox" checked={sessionSoundEnabled} onChange={handleToggleSessionSound} />
+            Som de início de sessão
           </label>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input type="range" min="0" max="0.5" step="0.01" value={soundVolume} onChange={handleVolumeChange} />
-            <span>{Math.round(soundVolume * 100)}%</span>
-          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <input type="checkbox" checked={alarmCountdownEnabled} onChange={handleToggleAlarmCountdown} />
+            Alerta de contagem regressiva
+          </label>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <input type="checkbox" checked={alarmEnabled} onChange={handleToggleAlarm} />
+            Alarme contínuo quando o tempo acabar
+          </label>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+          <input type="range" min="0" max="1" step="0.01" value={sessionSoundVolume} onChange={handleSessionVolumeChange} />
+          <span>Volume do som de sessão: {Math.round(sessionSoundVolume * 100)}%</span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+          <input type="range" min="0" max="1" step="0.01" value={alarmVolume} onChange={handleAlarmVolumeChange} />
+          <span>Volume do alarme: {Math.round(alarmVolume * 100)}%</span>
         </div>
       </section>
 

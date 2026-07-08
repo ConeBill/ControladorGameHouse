@@ -30,6 +30,7 @@ export default function MainLayout() {
 
   const isExpanded = panelHeight > PANEL_MIN_HEIGHT
   const isControlPanelRoute = location.pathname === '/control-panel'
+  const [alarmDescription, setAlarmDescription] = useState('')
 
   const handleTogglePanel = () => {
     setPanelHeight((prev) => (prev > PANEL_MIN_HEIGHT ? PANEL_MIN_HEIGHT : PANEL_MAX_HEIGHT))
@@ -64,9 +65,17 @@ export default function MainLayout() {
     window.addEventListener('openControlPanel', onOpen)
     window.addEventListener('sessionStarted', onSessionStarted)
 
+    const onAlarmTriggered = (e) => setAlarmDescription(e?.detail?.machineDescription || '')
+    const onAlarmSilenced = () => setAlarmDescription('')
+
+    window.addEventListener('machineAlarmTriggered', onAlarmTriggered)
+    window.addEventListener('machineAlarmSilenced', onAlarmSilenced)
+
     return () => {
       window.removeEventListener('openControlPanel', onOpen)
       window.removeEventListener('sessionStarted', onSessionStarted)
+      window.removeEventListener('machineAlarmTriggered', onAlarmTriggered)
+      window.removeEventListener('machineAlarmSilenced', onAlarmSilenced)
     }
   }, [])
 
@@ -78,21 +87,9 @@ export default function MainLayout() {
       const volumeStr = window.localStorage.getItem('settings.sessionSoundVolume')
       const baseVolume = volumeStr ? Number(volumeStr) : 0.12
 
-      const AudioCtx = window.AudioContext || window.webkitAudioContext
-      const ctx = new AudioCtx()
-      const o = ctx.createOscillator()
-      const g = ctx.createGain()
-      o.type = 'sine'
-      o.frequency.value = 880
-      o.connect(g)
-      g.connect(ctx.destination)
-      const now = ctx.currentTime
-      g.gain.setValueAtTime(0.0001, now)
-      g.gain.linearRampToValueAtTime(baseVolume, now + 0.02)
-      o.start(now)
-      o.frequency.exponentialRampToValueAtTime(660, now + 0.08)
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.36)
-      o.stop(now + 0.38)
+      const audio = new Audio('/sounds/session-start.wav')
+      audio.volume = Math.max(0.01, Math.min(1, baseVolume))
+      audio.play().catch(() => {})
     } catch (err) {
       // ignore audio errors
     }
@@ -180,6 +177,23 @@ export default function MainLayout() {
         <div className="control-panel__content">
           {sessionMessage && (
             <div className="control-panel__session-message">{sessionMessage}</div>
+          )}
+          {alarmDescription && (
+            <div className="control-panel__alarm-banner">
+              <div>
+                <strong>Tempo esgotado</strong>
+                <span>Máquina {alarmDescription}</span>
+              </div>
+              <button
+                type="button"
+                className="control-panel__alarm-button"
+                onClick={() => {
+                  window.silenceAllMachineAlarms?.()
+                }}
+              >
+                Silenciar
+              </button>
+            </div>
           )}
           <MachineDashboard />
         </div>

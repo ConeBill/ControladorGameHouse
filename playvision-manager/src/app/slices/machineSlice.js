@@ -77,6 +77,7 @@ const machineSlice = createSlice({
             machine.sessionPaidAmount = Number(sessionPaidAmount ?? 0)
             machine.sessionClosed = false
             machine.sessionFinalized = false
+            machine.sessionExpired = false
         },
 
         addMachineTime(state, action) {
@@ -93,6 +94,7 @@ const machineSlice = createSlice({
             machine.sessionPaidAmount = Number(machine.sessionPaidAmount || 0) + Number(paidAmount)
             machine.sessionClosed = false
             machine.sessionFinalized = false
+            machine.sessionExpired = false
         },
 
         incrementMachineSessionMinutes(state, action) {
@@ -130,6 +132,7 @@ const machineSlice = createSlice({
                 machine.sessionPaidAmount = 0
                 machine.sessionClosed = false
                 machine.sessionFinalized = false
+                machine.sessionExpired = false
             }
         },
 
@@ -154,11 +157,12 @@ const machineSlice = createSlice({
 
                     if (machine.seconds === 0) {
                         machine.running = false
-                        machine.available = true
-                        machine.status = 'livre'
+                        machine.available = false
+                        machine.status = 'bloqueada'
                         machine.clientId = null
                         machine.clientName = null
                         machine.sessionClosed = true
+                        machine.sessionExpired = true
                     }
                 }
             })
@@ -170,6 +174,26 @@ const machineSlice = createSlice({
 
             if (machine) {
                 machine.sessionFinalized = true
+            }
+        },
+
+        silenceMachine(state, action) {
+            const machine = state.list.find(m => m.id === action.payload)
+
+            if (machine) {
+                machine.status = 'livre'
+                machine.seconds = 0
+                machine.available = true
+                machine.running = false
+                machine.clientId = null
+                machine.clientName = null
+                machine.sessionId = null
+                machine.sessionPlayedMinutes = 0
+                machine.sessionPaidMinutes = 0
+                machine.sessionPaidAmount = 0
+                machine.sessionClosed = false
+                machine.sessionFinalized = false
+                machine.sessionExpired = false
             }
         }
     },
@@ -199,7 +223,8 @@ const machineSlice = createSlice({
                         sessionPaidMinutes: Number(row.session_paid_minutes ?? 0),
                         sessionPaidAmount: Number(row.session_paid_amount ?? 0),
                         sessionClosed: false,
-                        sessionFinalized: false
+                        sessionFinalized: false,
+                        sessionExpired: false
                     }
                 })
             })
@@ -216,7 +241,8 @@ const machineSlice = createSlice({
                     sessionPaidMinutes: 0,
                     sessionPaidAmount: 0,
                     sessionClosed: false,
-                    sessionFinalized: false
+                    sessionFinalized: false,
+                    sessionExpired: false
                 })
             })
 
@@ -244,7 +270,8 @@ export const {
     resetMachine,
     setMachineStatus,
     tick,
-    finalizeSession
+    finalizeSession,
+    silenceMachine
 } = machineSlice.actions
 
 export default machineSlice.reducer
